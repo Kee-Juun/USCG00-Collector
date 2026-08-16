@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+.venv/
+outputs/
+logs/
+config.json
+.pytest_cache/
+tmp/
+build/
+dist/
+.git_upload/
+FDUSCG00_Controller_Instruction.pdf
