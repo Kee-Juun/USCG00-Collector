@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 import csv
+import logging
+import tempfile
 import unittest
 from datetime import date
 from pathlib import Path
 from unittest.mock import Mock, patch
 
 from core.collector import resolve_output_root
-from core.models import CollectionResult
+from core.models import CollectionResult, DecisionRow
 from core.source import USCGSource
 from download.pdf_processor import classify_order_document, extract_decision_date
 from reporting.csv_reporter import write_reports
@@ -100,6 +102,20 @@ class CoreTests(unittest.TestCase):
     def test_relative_output_root_resolves_under_home(self):
         expected = Path.home() / "Downloads" / "USCG00 Collections"
         self.assertEqual(resolve_output_root({"output_root": "Downloads/USCG00 Collections"}), expected)
+
+    def test_duplicate_result_does_not_create_collected_folder(self):
+        from config.settings import DEFAULTS
+        from core.collector import Collector
+
+        collector = Collector(dict(DEFAULTS), logging.getLogger("test-empty-collected"))
+        collector.sfview.matches = Mock(return_value=[Mock(label="existing.pdf")])
+        row = DecisionRow(docket="2026-0002", pdf_url="https://example.test/decision.pdf")
+        with tempfile.TemporaryDirectory() as temporary:
+            collected_dir = Path(temporary) / "Collected"
+            result = collector._process(row, collected_dir)
+            self.assertEqual(result.status, "SKIPPED_SFVIEW")
+            self.assertFalse(collected_dir.exists())
+        collector.source.close()
 
     def test_ui_filters_detailed_logs_to_relevant_statuses(self):
         self.assertEqual(

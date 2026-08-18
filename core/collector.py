@@ -33,7 +33,6 @@ class Collector:
         run_name = f"USCG00_{year}_{stamp}"
         run_dir = resolve_output_root(self.config) / run_name
         collected_dir = run_dir / "Collected"
-        collected_dir.mkdir(parents=True, exist_ok=True)
         self.run_dir = run_dir
         self.log_path = attach_run_log(self.logger, run_dir, run_name)
         self.logger.info("Run folder ready: %s", run_dir)
@@ -91,6 +90,7 @@ class Collector:
             variant += 1
             target = collected_dir / f"{base}_v{variant}.pdf"
 
+        collected_dir.mkdir(parents=True, exist_ok=True)
         temporary = target.with_suffix(".pdf.part")
         temporary.write_bytes(data)
         temporary.replace(target)
